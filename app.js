@@ -1,0 +1,37 @@
+const $=s=>document.querySelector(s);
+const REWARDS=[
+{id:'paper_ball',name:'纸团',emoji:'⚪',rarity:'common',weight:28,desc:'墨团从桌角扒拉回来的纸团。'},
+{id:'bottle_cap',name:'瓶盖',emoji:'🔘',rarity:'common',weight:24,desc:'会在地板上滚很远的瓶盖。'},
+{id:'leaf',name:'银杏叶',emoji:'🍂',rarity:'common',weight:20,desc:'从窗边叼回来的秋天。'},
+{id:'fish',name:'小鱼干',emoji:'🐟',rarity:'rare',weight:12,desc:'墨团最舍不得分给你的零食。'},
+{id:'feather',name:'蓝羽毛',emoji:'🪶',rarity:'rare',weight:8,desc:'不知道从哪里找到的漂亮羽毛。'},
+{id:'star',name:'星星玻璃珠',emoji:'🔮',rarity:'rare',weight:5,desc:'在光里会闪一下的小珠子。'},
+{id:'gold_fish',name:'金墨鱼',emoji:'🌟',rarity:'ssr',weight:2,desc:'传说中的墨境城幸运物。'},
+{id:'moon',name:'月亮徽章',emoji:'🌙',rarity:'ssr',weight:1,desc:'只有很专注的人才能看到。'}];
+const STORAGE='focuscat.state.v1';
+let selectedMinutes=25,totalSeconds=1500,remaining=1500,timerId=null,running=false,paused=false,currentReward=null;
+let state=loadState();
+function today(){const d=new Date();return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`}
+function loadState(){try{const s=JSON.parse(localStorage.getItem(STORAGE)||'{}');const t=today();if(s.lastDate!==t){s.todayMinutes=0;s.todaySessions=0}return{sessions:+s.sessions||0,totalMinutes:+s.totalMinutes||0,todayMinutes:+s.todayMinutes||0,todaySessions:+s.todaySessions||0,streak:+s.streak||0,coins:+s.coins||0,inventory:s.inventory||{},lastDate:s.lastDate||''}}catch(_){return{sessions:0,totalMinutes:0,todayMinutes:0,todaySessions:0,streak:0,coins:0,inventory:{},lastDate:''}}}
+function save(){localStorage.setItem(STORAGE,JSON.stringify(state))}
+function dayBefore(key){const d=new Date();d.setDate(d.getDate()-1);return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`}
+function format(s){s=Math.max(0,Math.floor(s));return `${String(Math.floor(s/60)).padStart(2,'0')}:${String(s%60).padStart(2,'0')}`}
+function reward(){const total=REWARDS.reduce((s,x)=>s+x.weight,0);let n=Math.random()*total;for(const r of REWARDS){n-=r.weight;if(n<0)return r}return REWARDS[0]}
+function cat(stateName,text){$('#catWrap').dataset.state=stateName;$('#catThought').textContent=text}
+function update(){
+ $('#timer').textContent=format(remaining);$('#todayMinutes').textContent=state.todayMinutes;$('#totalMinutes').textContent=state.totalMinutes;$('#sessionCount').textContent=state.sessions;$('#coinCount').textContent=state.coins;$('#streakValue').textContent=state.streak;
+ const done=(totalSeconds-remaining)/totalSeconds*100;$('#progressBar').style.width=`${Math.max(0,Math.min(100,done))}%`;
+ renderCollection();renderShelf();
+}
+function renderCollection(){const box=$('#collectionGrid');box.innerHTML='';let unlocked=0;REWARDS.forEach(r=>{const n=state.inventory[r.id]||0;if(n)unlocked++;const el=document.createElement('div');el.className=`collect-item ${n?'':'locked'} ${r.rarity}`;el.title=r.desc;el.innerHTML=`<span class="count">×${n}</span><div class="emoji">${r.emoji}</div><b>${r.name}</b><small>${r.rarity==='ssr'?'SSR':r.rarity==='rare'?'稀有':'普通'}</small>`;box.appendChild(el)});$('#collectionCount').textContent=`${unlocked} / ${REWARDS.length}`}
+function renderShelf(){const found=REWARDS.filter(r=>(state.inventory[r.id]||0)>0).slice(-7);$('#shelf').innerHTML=found.map(r=>`<span class="shelf-item" title="${r.name}">${r.emoji}</span>`).join('')}
+function setMode(min){if(running)return;selectedMinutes=min;totalSeconds=remaining=min*60;document.querySelectorAll('[data-min]').forEach(b=>b.classList.toggle('active',+b.dataset.min===min));$('#startBtn').textContent=min===5?'开始休息':'开始专注';$('#statusText').textContent=min===5?'墨团也准备眯一会儿':'墨团已经趴好了';cat('idle',min===5?'休息一下也很重要。':'今天也一起认真一点。');update()}
+function start(){if(running&&!paused)return;running=true;paused=false;$('#startBtn').disabled=true;$('#pauseBtn').disabled=false;$('#giveUpBtn').disabled=false;$('#pauseBtn').textContent='暂停';$('#statusText').textContent=selectedMinutes===5?'休息计时中':'专注中 · 墨团不会打扰你';cat('focus',selectedMinutes===5?'我先睡五分钟。':'你忙你的，我趴我的。');clearInterval(timerId);timerId=setInterval(()=>{remaining--;if(remaining<=0){remaining=0;clearInterval(timerId);finish()}update()},1000);update()}
+function pause(){if(!running)return;if(!paused){paused=true;clearInterval(timerId);$('#pauseBtn').textContent='继续';$('#statusText').textContent='暂停中 · 墨团在看你';cat('paused','嗯？怎么停了？')}else{paused=false;$('#pauseBtn').textContent='暂停';$('#statusText').textContent=selectedMinutes===5?'休息计时中':'专注中 · 墨团不会打扰你';cat('focus','继续吧，我还在。');timerId=setInterval(()=>{remaining--;if(remaining<=0){remaining=0;clearInterval(timerId);finish()}update()},1000)}}
+function giveUp(){clearInterval(timerId);running=false;paused=false;remaining=totalSeconds;$('#startBtn').disabled=false;$('#pauseBtn').disabled=true;$('#giveUpBtn').disabled=true;$('#pauseBtn').textContent='暂停';$('#statusText').textContent='本次没有奖励';cat('paused','这次算你欠我的。');update();setTimeout(()=>cat('idle','下次再认真一点。'),1800)}
+function finish(){running=false;paused=false;$('#startBtn').disabled=false;$('#pauseBtn').disabled=true;$('#giveUpBtn').disabled=true;$('#pauseBtn').textContent='暂停';cat('celebrate',selectedMinutes===5?'休息完成。伸个懒腰。':'我带东西回来了！');if(selectedMinutes===5){$('#statusText').textContent='休息完成';beep();setTimeout(()=>setMode(25),900);return}
+ const t=today();if(state.lastDate!==t){state.streak=state.lastDate===dayBefore(t)?state.streak+1:1;state.todayMinutes=0;state.todaySessions=0;state.lastDate=t}else if(!state.streak)state.streak=1;
+ state.sessions++;state.totalMinutes+=selectedMinutes;state.todayMinutes+=selectedMinutes;state.todaySessions++;const coins=Math.max(5,Math.round(selectedMinutes/5));state.coins+=coins;currentReward=reward();state.inventory[currentReward.id]=(state.inventory[currentReward.id]||0)+1;save();update();showReward(coins);beep();remaining=totalSeconds}
+function showReward(coins){$('#rewardRarity').textContent=currentReward.rarity==='ssr'?'SSR ✦':currentReward.rarity==='rare'?'稀有':'普通';$('#rewardEmoji').textContent=currentReward.emoji;$('#rewardName').textContent=currentReward.name;$('#rewardDesc').textContent=currentReward.desc;$('#modalMinutes').textContent=`${selectedMinutes} 分钟`;$('#modalCoins').textContent=`+${coins} 🐟`;$('#rewardModal').classList.remove('hidden');$('#rewardPreview').innerHTML=`<div class="mystery">${currentReward.emoji}</div><div><b>${currentReward.name} · ${currentReward.rarity==='ssr'?'SSR':currentReward.rarity==='rare'?'稀有':'普通'}</b><span>${currentReward.desc}</span></div>`}
+function beep(){try{const ac=new AudioContext(),o=ac.createOscillator(),g=ac.createGain();o.connect(g);g.connect(ac.destination);o.frequency.value=660;g.gain.setValueAtTime(.08,ac.currentTime);g.gain.exponentialRampToValueAtTime(.001,ac.currentTime+.55);o.start();o.stop(ac.currentTime+.55)}catch(_){}}
+$('#modeTabs').addEventListener('click',e=>{const b=e.target.closest('[data-min]');if(b)setMode(+b.dataset.min)});$('#startBtn').addEventListener('click',start);$('#pauseBtn').addEventListener('click',pause);$('#giveUpBtn').addEventListener('click',giveUp);$('#claimBtn').addEventListener('click',()=>{$('#rewardModal').classList.add('hidden');cat('idle','下一轮也要继续哦。');$('#statusText').textContent='奖励已收入收藏夹';update()});$('#pinTop').addEventListener('change',e=>window.focuscat?.setAlwaysOnTop(e.target.checked));$('#minBtn').addEventListener('click',()=>window.focuscat?.minimize());$('#closeBtn').addEventListener('click',()=>window.focuscat?.close());update();

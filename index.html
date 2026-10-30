@@ -1,0 +1,54 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>FocusCat 墨团专注屋</title><link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<div class="app-shell">
+  <header class="topbar">
+    <div class="brand"><div class="brand-mark">🐈‍⬛</div><div><b>FocusCat</b><span>墨团专注屋 · v0.1</span></div></div>
+    <div class="top-actions"><label class="pin"><input id="pinTop" type="checkbox">置顶陪伴</label><button id="minBtn">—</button><button id="closeBtn">×</button></div>
+  </header>
+  <main class="layout">
+    <section class="room-panel">
+      <div class="room-head"><div><span class="eyebrow">FOCUS WITH MOTUAN</span><h1>你专注，<em>猫生活。</em></h1></div><div class="streak-badge">🔥 <b id="streakValue">0</b><span>连续天数</span></div></div>
+      <div class="window-scene">
+        <div class="moon"></div><div class="stars"></div>
+        <div class="desk-lamp"></div><div class="plant"><i></i><i></i><i></i></div>
+        <div class="cat-wrap" id="catWrap" data-state="idle">
+          <div class="tail"></div><div class="body"></div>
+          <div class="head"><div class="ear left"></div><div class="ear right"></div><div class="face"><span class="eye l"></span><span class="eye r"></span><span class="nose"></span><span class="mouth"></span></div></div>
+          <div class="paw p1"></div><div class="paw p2"></div>
+          <div class="thought" id="catThought">今天也一起认真一点。</div>
+        </div>
+        <div class="shelf" id="shelf"></div>
+      </div>
+      <div class="room-footer"><div><span>今日</span><b><i id="todayMinutes">0</i> 分钟</b></div><div><span>总专注</span><b><i id="totalMinutes">0</i> 分钟</b></div><div><span>完成次数</span><b><i id="sessionCount">0</i> 次</b></div><div><span>鱼干币</span><b>🐟 <i id="coinCount">0</i></b></div></div>
+    </section>
+
+    <aside class="control-panel">
+      <section class="timer-card card">
+        <div class="section-title"><span>01</span><b>专注计时</b></div>
+        <div class="mode-tabs" id="modeTabs"><button data-min="25" class="active">25 分钟</button><button data-min="50">50 分钟</button><button data-min="5">5 分钟休息</button></div>
+        <div class="timer" id="timer">25:00</div>
+        <div class="status-line"><span class="dot"></span><span id="statusText">墨团已经趴好了</span></div>
+        <div class="timer-actions"><button id="startBtn" class="primary">开始专注</button><button id="pauseBtn" class="secondary" disabled>暂停</button><button id="giveUpBtn" class="danger" disabled>放弃</button></div>
+        <div class="progress"><i id="progressBar"></i></div>
+      </section>
+
+      <section class="reward-card card">
+        <div class="section-title"><span>02</span><b>本次奖励</b></div>
+        <div class="reward-preview" id="rewardPreview"><div class="mystery">?</div><div><b>完成后墨团会带东西回来</b><span>可能只是瓶盖，也可能是 SSR。</span></div></div>
+      </section>
+
+      <section class="collection-card card">
+        <div class="section-title"><span>03</span><b>墨团收藏夹</b><small id="collectionCount">0 / 8</small></div>
+        <div class="collection-grid" id="collectionGrid"></div>
+      </section>
+    </aside>
+  </main>
+</div>
+<div class="modal hidden" id="rewardModal"><div class="modal-card"><span class="rarity" id="rewardRarity">普通</span><div class="reward-big" id="rewardEmoji">🐟</div><h2 id="rewardName">小鱼干</h2><p id="rewardDesc">墨团叼回来的礼物。</p><div class="modal-stats"><span>本次专注 <b id="modalMinutes">25 分钟</b></span><span>奖励 <b id="modalCoins">+5 🐟</b></span></div><button id="claimBtn" class="primary wide">收下礼物</button></div></div>
+<script src="app.js"></script>
+</body></html>
